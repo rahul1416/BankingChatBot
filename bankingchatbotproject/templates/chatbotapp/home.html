@@ -3,9 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ChatBot</title>
+    <title>Voice Chatbot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        #chat-container {
+            width: 300px;
+            margin: 50px auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        #chat-messages {
+            height: 200px;
+            overflow-y: scroll;
+            border-bottom: 1px solid #ccc;
+            margin-bottom: 10px;
+        }
+
+        #user-input {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+
+        #send-button, #voice-button {
+            padding: 8px;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
-    <h1> Main Hoon Rahul </h1>
+
+<div id="chat-container">
+    <div id="chat-messages"></div>
+    <input type="text" id="user-input" placeholder="Type your message...">
+    <button id="send-button" onclick="sendMessage()">Send</button>
+    <button id="voice-button" onclick="startVoiceRecognition()">Start Voice</button>
+</div>
+
+<script>
+    function sendMessage() {
+        var userInput = document.getElementById('user-input').value;
+        var chatMessages = document.getElementById('chat-messages');
+
+        // Display user message
+        chatMessages.innerHTML += '<p>User: ' + userInput + '</p>';
+
+        // You can add chatbot logic here to generate a response
+        var botResponse = "functionality.";
+
+        // Display chatbot response
+        chatMessages.innerHTML += '<p>Chatbot: ' + botResponse + '</p>';
+
+        // Clear user input
+        document.getElementById('user-input').value = '';
+
+        // Scroll to the bottom of the chat container
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function startVoiceRecognition() {
+        var recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition || window.mozSpeechRecognition || window.msSpeechRecognition)();
+        
+        recognition.onresult = function(event) {
+            var transcript = event.results[0][0].transcript;
+            document.getElementById('user-input').value = transcript;
+            sendMessage(); // Automatically send the message after voice recognition
+        };
+
+        recognition.start();
+    }
+</script>
+
 </body>
 </html>
