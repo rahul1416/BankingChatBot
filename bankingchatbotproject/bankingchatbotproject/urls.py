@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path,include
-import chatbotapp.urls
+import chatbotapp.urls 
 
 urlpatterns = [
     path('',include(chatbotapp.urls)),
