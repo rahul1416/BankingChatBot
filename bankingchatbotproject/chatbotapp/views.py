@@ -1,5 +1,5 @@
 from django.shortcuts import render,HttpResponse
-from chatbotapp.models import record_sound , recognize_speech
+from chatbotapp.models import record_sound , recognize_speech, _response
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
@@ -14,11 +14,27 @@ def upload_audio(request):
         try:
             data = json.loads(request.body)
             audio_data = data.get('audioData')
-            # recording = record_sound()
+            recording = record_sound()
             speech = recognize_speech()
-            response_data = {'status': 'success', 'message': speech}
+            audio = json.loads(speech)
+            response_data = {'status': 'success', 'model': 'llama2','prompt': audio['text'],'stream':False}
             print(speech)
             return JsonResponse(response_data)
         except Exception as e:
             response_data = {'status': 'error', 'message': str(e)}
             return JsonResponse(response_data, status=500)
+def response(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            # print(data)
+            response = _response(data)
+            # print(response)
+            output = json.loads(response)
+            response_data = {'status': 'success', 'model': 'llama2','prompt': output['response']}
+            
+            return JsonResponse(response_data)
+        except Exception as e:
+            response_data = {'status': 'error', 'messages': str(e)}
+            return JsonResponse(response_data, status=500)
+        

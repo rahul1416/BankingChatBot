@@ -24,51 +24,94 @@
         </div>
       </nav>
 
-    <h1></h1>
+    <h1></h1>  
     <div class="container mt-4">
-        <button class="btn btn-primary" id="recordButton">Record Audio</button>
-    </div>
-    <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        var recordButton = document.getElementById('recordButton');
-    
-        recordButton.addEventListener('click', function () {
-            var audioData = 'audio-data';
-    
-            fetch("/upload_audio/", {
-                method: 'POST',
-                credentials: 'same-origin',
-                headers: {
+      <button class="btn btn-primary" id="recordButton">Record Audio</button>
+      <button class="btn btn-primary" id="sendAudioButton">Send Audio</button>
+  </div>
+  
+  <script>
+      document.addEventListener('DOMContentLoaded', function () {
+          var sank;
+  
+          var recordButton = document.getElementById('recordButton');
+          var sendAudioButton = document.getElementById('sendAudioButton');
+  
+          recordButton.addEventListener('click', function () {
+              recordAudio();
+          });
+  
+          sendAudioButton.addEventListener('click', function () {
+              sendAudioData(sank);
+          });
+  
+          function recordAudio() {
+              // Your audio recording logic goes here
+              // For demonstration purposes, using a placeholder
+              var audioData = 'audio-data';
+  
+              fetch("/upload_audio/", {
+                  method: 'POST',
+                  credentials: 'same-origin',
+                  headers: {
+                      'Accept': 'application/json',
+                      'X-Requested-With': 'XMLHttpRequest',
+                      'X-CSRFToken': getCookie('csrftoken'),
+                  },
+                  body: JSON.stringify({'post_data': audioData})
+              })
+              .then(response => {
+                  return response.json();
+              })
+              .then(data => {
+                  sank = data;
+                  console.log('Server response:', data);
+              });
+          }
+
+          function sendAudioData(dataToSend) {
+              console.log("actual data",dataToSend);
+              var dataToSend = sank
+              fetch("/response/", {
+                  method: 'POST',
+                  headers: {
                     'Accept': 'application/json',
                     'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRFToken': getCookie('csrftoken'), // Include CSRF token
+                    'X-CSRFToken': getCookie('csrftoken'),
                 },
-                body: JSON.stringify({'post_data': 'Data to post'})
-            })
-            .then(response => {
+                  body: JSON.stringify(dataToSend)
+              })
+              .then(response => {
+                console.log('Full response from the server:', response);
                 return response.json();
             })
-            .then(data => {
-                console.log('Server response:', data);
-            });
-        });
-    });
-    
-    function getCookie(name) {
-        var cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            var cookies = document.cookie.split(';');
-            for (var i = 0; i < cookies.length; i++) {
-                var cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    }
-</script>
+              .then(data => {
+                  console.log('Response from the server:', data);
+                  // Handle the response from the server as needed
+              })
+              .catch(error => {
+                  console.error('Error sending data to the server:', error);
+              });
+          }
+  
+          function getCookie(name) {
+              var cookieValue = null;
+              if (document.cookie && document.cookie !== '') {
+                  var cookies = document.cookie.split(';');
+                  for (var i = 0; i < cookies.length; i++) {
+                      var cookie = cookies[i].trim();
+                      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                          break;
+                      }
+                  }
+              }
+              return cookieValue;
+          }
+      });
+  </script>
+  
+  
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
   </body>
 </html>

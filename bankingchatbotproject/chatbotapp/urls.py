@@ -4,4 +4,6 @@ from . import views
 urlpatterns = [
     path('',views.index,name = "index"),
     path('upload_audio/', views.upload_audio, name='upload_audio'),
+    path('response/', views.response, name='response'),
+
 ]

@@ -1,6 +1,8 @@
 from django.db import models
 
 # Create your models here.
+import json
+import requests
 import sounddevice as sd
 import soundfile as sf
 import numpy as np
@@ -17,7 +19,7 @@ def record_sound(duration = 5, fs=8000 , channels = 1):
     sf.write(filename, recording, fs)
     return recording
 
-def recognize_speech(audio_file = 'static/recoded.wav', model_path = "static/vosk-model-small-hi-0.22"):
+def recognize_speech(audio_file = 'static/recoded.wav', model_path = "static/vosk-model-small-en-in-0.4"):
     model = vosk.Model(model_path)
     wf = wave.open(audio_file, 'rb')
 
@@ -34,3 +36,14 @@ def recognize_speech(audio_file = 'static/recoded.wav', model_path = "static/vos
             print(result)
     result = rec.FinalResult()
     return result
+
+def _response(data, url="http://localhost:11434/api/generate"):
+    response = requests.post(url, json=data)
+    if response.status_code == 200:
+        response_text = response.text
+        response_lines = response_text.splitlines()
+        print(response_lines[0])
+        response_json = json.loads(response_lines[0])
+        return response_lines[0]
+    else:
+        return "Error:", response.status_code
