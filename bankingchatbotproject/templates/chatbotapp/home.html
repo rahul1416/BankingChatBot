@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="utf-8">
@@ -27,15 +27,26 @@
     <h1></h1>  
     <div class="container mt-4">
       <button class="btn btn-primary" id="recordButton">Record Audio</button>
-      <button class="btn btn-primary" id="sendAudioButton">Send Audio</button>
   </div>
-  
+  <div class="m-4 fs-3">
+    Input Given: <input class="input_given"></input>
+    <button class="btn btn-primary" id="sendAudioButton">Send Audio</button>
+  </div>
+  <div class="m-4 fs-4">
+    <span class="fw-bold">Output generated:</span>
+    <span class="output_generated"></span>
+  </div>
+  {% csrf_token %}
   <script>
+    
       document.addEventListener('DOMContentLoaded', function () {
           var sank;
   
           var recordButton = document.getElementById('recordButton');
           var sendAudioButton = document.getElementById('sendAudioButton');
+
+          let inputText = document.querySelector(".input_given");
+          let outputText = document.querySelector(".output_generated");
   
           recordButton.addEventListener('click', function () {
               recordAudio();
@@ -66,12 +77,13 @@
               .then(data => {
                   sank = data;
                   console.log('Server response:', data);
+                  inputText.value = data.prompt;
               });
           }
-
+          
           function sendAudioData(dataToSend) {
-              console.log("actual data",dataToSend);
-              var dataToSend = sank
+            console.log("actual data",dataToSend);
+            dataToSend["prompt"] = inputText.value;
               fetch("/response/", {
                   method: 'POST',
                   headers: {
@@ -87,6 +99,7 @@
             })
               .then(data => {
                   console.log('Response from the server:', data);
+                  outputText.textContent = data.prompt;
                   // Handle the response from the server as needed
               })
               .catch(error => {
