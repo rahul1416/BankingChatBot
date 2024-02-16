@@ -7,7 +7,7 @@ import json
 from pydub import AudioSegment
 import io
 from .models import User
-
+import requests
 
 # Create your views here.
 # @csrf_exempt
@@ -48,7 +48,11 @@ def getDetails(request):
             return JsonResponse({"error": "User not found"}, status=404)
     else:
         return JsonResponse({"error": "Method not allowed"}, status=405)
-    
+
+
+
+
+
 @csrf_exempt
 def sendaudio(request):
     if request.method == 'POST' and request.FILES.get('audio'):
@@ -69,10 +73,10 @@ def sendaudio(request):
         print("WAV file saved at:", wav_file_path)
         try:
             text = get_text_from_voice()
-            text = json.loads(text)['text']
-            print("WE got the text " ,text)
+            print(text)
         except Exception as e:
             text = "Failed Error,Try refreshing it/or try after some time"
+            print(e)
         response_data = {'status': 'success', 'model': 'llama2','prompt': text}
 
     
@@ -113,4 +117,22 @@ def transferMoney(request):
     else:
         return HttpResponse("Only POST requests are allowed", status=405)
 
+@csrf_exempt
+def _response(data, url="http://localhost:11434/api/generate"):
+    data = json.loads(data.body.decode('utf-8'))
+    print(f"I get the data as {data}: {type(data)}")
+    input_text = data['prompt']
+    getIntent = "Find if the intent is \getUser_details and \itransfer_money"+input_text+"return intent in one word,just one word"
+    data['prompt']=getIntent
+    print(data)
+    response = requests.post(url, json=data)
+    print(response.text)
+    if response.status_code == 200:
+        response_text = response.text
+        response_lines = response_text.splitlines()
+        response_json = json.loads(response_lines[0])['response']
         
+    # return JsonResponse({"this":"hello"})
+        return JsonResponse({"response":response_json})
+    # else:
+    #     return "Error:", response.status_code
