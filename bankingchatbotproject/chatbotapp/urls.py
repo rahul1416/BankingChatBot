@@ -3,7 +3,9 @@ from django.urls import path,include
 from . import views
 urlpatterns = [
     path('',views.index,name = "index"),
-    path('upload_audio/', views.upload_audio, name='upload_audio'),
-    path('response/', views.response, name='response'),
+    path('getuser', views.getLogin, name='getLogin'),
+    path('getdetails', views.getDetails, name='getDetails'),
+    path('sendaudio', views.sendaudio, name='sendaudio'),
+    path('transfermoney', views.transferMoney, name='transfermoney'),
 
 ]
