@@ -129,7 +129,7 @@ def sendaudio(request):
             print("Error",e)
             text = "Failed Error,Try refreshing it/or try after some time"
             print(e)
-        response_data = {'status': 'success', 'model': 'llama2','prompt': text}
+        response_data = {'status': 'success', 'model': 'rahul','prompt': text}
 
     
     return JsonResponse(response_data,status=200)
@@ -170,7 +170,8 @@ def _response(data, url="http://localhost:11434/api/generate"):
     data = json.loads(data.body.decode('utf-8'))
     print(f"I get the data as {data}: {type(data)}")
     input_text = data['prompt']
-    getIntent = "Find if the intent is \getUser_details and \itransfer_money"+input_text+"return intent in one word,just one word"
+    data['model'] = 'rahul'
+    getIntent = input_text
     data['prompt']=getIntent
     print(data)
     response = requests.post(url, json=data)
