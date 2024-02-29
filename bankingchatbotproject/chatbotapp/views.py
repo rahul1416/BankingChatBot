@@ -32,48 +32,115 @@ def getLogin(request):
 @csrf_exempt
 def talktoOlama(request):
     if request.method=='POST':
-        received_data = json.loads(request.body)
-        text_data = received_data.get('audio_data')
-        olamaReturn = OlamaPreprocess(text_data)
-        api_call = olamaReturn['api_call']
-        api_body = olamaReturn['api_body']
-        if(api_call=='getUserDetails'):
-            user = User.objects.filter(customerAccountNo=api_body['acc_no']).first()
-            if user:
-                response = {
-                    "name":user.customerName,
-                    "acc_no":user.customerAccountNo,
-                    "balance":user.balance
-                }
-                data = f'Hi {response['name']}! , Welcome to Trio-Group ,Your account number is {response['acc_no']}, and You hava Rs{response['balance']} in your account'
-                return JsonResponse({"message": data}, status=200)
-            else:
-                return JsonResponse({"error": "User not found"}, status=404)
-        
-        elif(api_call=='transferMoney'):
-            sender_acc_no = api_body['acc_no1']
-            receiver_acc_no = api_body['acc_no2']
-            amount = api_body['amount']
-            response = transferMoney(sender_acc_no=sender_acc_no,receiver_acc_no=receiver_acc_no,amount=amount)
-            return JsonResponse({"message":response['message']},status = response['status'])
+        error=""
+        try:
+            received_data = json.loads(request.body)
+            text_data = received_data.get('audio_data')
+            olamaReturn = OlamaPreprocess(text_data)
+            print(olamaReturn)
+            api_call = olamaReturn['api_call']
+            api_body = olamaReturn['api_body']
+            if(api_call=='getUserDetails'):
+                user = User.objects.filter(customerAccountNo=api_body['acc_no']).first()
+                if user:
+                    response = {
+                        "name":user.customerName,
+                        "acc_no":user.customerAccountNo,
+                        "balance":user.balance
+                    }
+                    data = f"Hi {response['name']}! , Welcome to Trio-Group ,Your account number is {response['acc_no']}, and You hava Rs{response['balance']} in your account"
+                    return JsonResponse({"message": data}, status=200)
+                else:
+                    return JsonResponse({"error": "User not found"}, status=404)
+            
+            elif(api_call=='transferMoney'):
+                sender_acc_no = api_body['acc_no1']
+                receiver_acc_no = api_body['acc_no2']
+                amount = api_body['amount']
+                response = transferMoney(sender_acc_no=sender_acc_no,receiver_acc_no=receiver_acc_no,amount=amount)
+                return JsonResponse({"message":response['message']},status = response['status'])
+        except Exception as e:
+            error = e
 
-    return JsonResponse({"message":"Error"},status =404)
+    return JsonResponse({"message":error},status =200)
 
+def preprocessText(text):
 
+    try:
+        text = text.replace("\n","")
+        text = text.replace("\\","")
+        start_text = -1
+        end_text = -1
+        print("the text modified",text)
+        for i in range(len(text)):
+            if text[i]=='{':
+                start_text = i
+            elif text[i]=='}':
+                end_text = i  
+        print("No problem till here")
+        if start_text != -1 and end_text != -1:
+            text = text[start_text:end_text+1]
+            print("and here")
+            try:
+                text = json.loads(text)
+                print("rahul here",text)
+            except Exception as e:
+                text = e ="Error"
+        else:
+            text = "Error: No JSON object found in the input."
+    except Exception as e:
+        text = "Error"
+        print(e)
+    return text
 
 
 def OlamaPreprocess(text):
     api_call=""
     api_body = {}
     
-    if 'transfer' in text:
-        api_call='transferMoney'
-        api_body['acc_no1']=1
-        api_body['acc_no2']=3
-        api_body['amount']=100
-    else:
-        api_call = 'getUserDetails'
-        api_body['acc_no']=3
+    response = _response(text)
+    print("We git the response from olama as",response,"yes")
+    response = preprocessText(response)
+    print("Preprocessing text",response)
+    try:
+        if(response=="Error"):
+            return response
+
+        if 'get_details' in response['api_call']:
+            print("Trye he")
+            try:
+                # Assuming 'response' is a dictionary
+                for i, (key, value) in enumerate(response.items(), start=1):
+                    print("We started", i, key, value, "We ended")
+
+                    if i == 1:
+                        api_call = 'getUserDetails'
+                    elif i == 2:
+                        api_body['acc_no'] = value
+
+            except Exception as e:
+                api_call = 'Not Valid data'
+        
+        elif response['api_call']=='/transfer_money':
+            try:
+                for i, (key, value) in enumerate(response.items(), start=1):
+                    print("We started", i, key, value, "We ended")
+                    api_call='transferMoney'
+                    if 'sender' in key:
+                        api_body['acc_no1']=value
+                    if 'reciever' in key:
+                        api_body['acc_no2'] =value 
+                    if 'amount' in key and value.isdigit():
+                        api_body['amount']=value
+                
+            except Exception as e:
+                api_call='Not Valid data'
+        else:
+            api_call='Not Valid data'
+    
+    except Exception as e:
+        api_call = "Server Side Error"
+        
     return {
         "api_call":api_call,
         "api_body":api_body
@@ -166,13 +233,17 @@ def transferMoney(sender_acc_no,receiver_acc_no,amount):
 
 
 @csrf_exempt
-def _response(data, url="http://localhost:11434/api/generate"):
-    data = json.loads(data.body.decode('utf-8'))
-    print(f"I get the data as {data}: {type(data)}")
-    input_text = data['prompt']
-    data['model'] = 'rahul'
-    getIntent = input_text
-    data['prompt']=getIntent
+def _response(text, url="http://localhost:11434/api/generate"):
+    # data = json.loads(data.body.decode('utf-8'))
+    # print(f"I get the data as {data}: {type(data)}")
+    # input_text = data['prompt']
+    # data['model'] = 'rahul'
+    # getIntent = input_text
+    # data['prompt']=getIntent
+    data = {}
+    data['model']='rahul'
+    data['stream']=False
+    data['prompt']=text
     print(data)
     response = requests.post(url, json=data)
     print(response.text)
@@ -182,6 +253,7 @@ def _response(data, url="http://localhost:11434/api/generate"):
         response_json = json.loads(response_lines[0])['response']
         
     # return JsonResponse({"this":"hello"})
-        return JsonResponse({"response":response_json})
+        return response_json
+    return response.text
     # else:
     #     return "Error:", response.status_code
