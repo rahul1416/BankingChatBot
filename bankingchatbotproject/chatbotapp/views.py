@@ -29,6 +29,57 @@ def getLogin(request):
     else:
         return JsonResponse({"error": "Method not allowed"}, status=405)
 
+@csrf_exempt
+def talktoOlama(request):
+    if request.method=='POST':
+        received_data = json.loads(request.body)
+        text_data = received_data.get('audio_data')
+        olamaReturn = OlamaPreprocess(text_data)
+        api_call = olamaReturn['api_call']
+        api_body = olamaReturn['api_body']
+        if(api_call=='getUserDetails'):
+            user = User.objects.filter(customerAccountNo=api_body['acc_no']).first()
+            if user:
+                response = {
+                    "name":user.customerName,
+                    "acc_no":user.customerAccountNo,
+                    "balance":user.balance
+                }
+                data = f'Hi {response['name']}! , Welcome to Trio-Group ,Your account number is {response['acc_no']}, and You hava Rs{response['balance']} in your account'
+                return JsonResponse({"message": data}, status=200)
+            else:
+                return JsonResponse({"error": "User not found"}, status=404)
+        
+        elif(api_call=='transferMoney'):
+            sender_acc_no = api_body['acc_no1']
+            receiver_acc_no = api_body['acc_no2']
+            amount = api_body['amount']
+            response = transferMoney(sender_acc_no=sender_acc_no,receiver_acc_no=receiver_acc_no,amount=amount)
+            return JsonResponse({"message":response['message']},status = response['status'])
+
+    return JsonResponse({"message":"Error"},status =404)
+
+
+
+
+def OlamaPreprocess(text):
+    api_call=""
+    api_body = {}
+    
+    if 'transfer' in text:
+        api_call='transferMoney'
+        api_body['acc_no1']=1
+        api_body['acc_no2']=3
+        api_body['amount']=100
+    else:
+        api_call = 'getUserDetails'
+        api_body['acc_no']=3
+    return {
+        "api_call":api_call,
+        "api_body":api_body
+    }
+
+
 
 
 def getDetails(request):
@@ -75,6 +126,7 @@ def sendaudio(request):
             text = get_text_from_voice()
             print(text)
         except Exception as e:
+            print("Error",e)
             text = "Failed Error,Try refreshing it/or try after some time"
             print(e)
         response_data = {'status': 'success', 'model': 'rahul','prompt': text}
@@ -83,39 +135,35 @@ def sendaudio(request):
     return JsonResponse(response_data,status=200)
 
 
-@csrf_exempt
-def transferMoney(request):
-    if request.method == 'POST':
-        sender_acc_no = request.POST.get('acc_no1')
-        receiver_acc_no = request.POST.get('acc_no2')
-        amount = request.POST.get('amount')
 
-        # Check if sender and receiver accounts exist
-        sender = get_object_or_404(User, customerAccountNo=sender_acc_no)
-        receiver = get_object_or_404(User, customerAccountNo=receiver_acc_no)
+def transferMoney(sender_acc_no,receiver_acc_no,amount):
+    # Check if sender and receiver accounts exist
+    sender = get_object_or_404(User, customerAccountNo=sender_acc_no)
+    receiver = get_object_or_404(User, customerAccountNo=receiver_acc_no)
+    
+    amount =str(amount)
+    # Check if the amount is valid
+    if not amount or not amount.isdigit():
+        return {"message":"Invalid amount", "status":200}
 
-        # Check if the amount is valid
-        if not amount or not amount.isdigit():
-            return HttpResponse("Invalid amount", status=400)
+    # Convert amount to integer
+    amount = int(amount)
 
-        # Convert amount to integer
-        amount = int(amount)
+    # Ensure sender has enough balance
+    if sender.balance < amount:
+        return {"message":"Insufficient balance", "status":200}
 
-        # Ensure sender has enough balance
-        if sender.balance < amount:
-            return HttpResponse("Insufficient balance", status=400)
+    # Update sender and receiver balances
+    sender.balance -= amount
+    receiver.balance += amount
 
-        # Update sender and receiver balances
-        sender.balance -= amount
-        receiver.balance += amount
+    # Save changes to the database
+    sender.save()
+    receiver.save()
+    return {"message":f"{sender.customerName} has transferred {receiver.customerName} Rs{amount} successfully, Current Balance:{sender.balance}", "status":200}
+    
 
-        # Save changes to the database
-        sender.save()
-        receiver.save()
 
-        return HttpResponse("Money Transferred")
-    else:
-        return HttpResponse("Only POST requests are allowed", status=405)
 
 @csrf_exempt
 def _response(data, url="http://localhost:11434/api/generate"):

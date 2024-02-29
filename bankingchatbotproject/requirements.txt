@@ -2,4 +2,6 @@ channels==4.0.0
 daphne==4.1.0
 Django==5.0.2
 django-cors-headers==4.3.1
+soundevice
+soundfile
 numpy==1.26.4

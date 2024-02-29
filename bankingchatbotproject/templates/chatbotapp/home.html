@@ -66,7 +66,6 @@
     <audio controls id="audioPlayer" style="display:none;"></audio>
 
     <script>
-        
         navigator.mediaDevices.getUserMedia({ audio: true })
             .then(function (stream) {
                 const mediaRecorder = new MediaRecorder(stream);
@@ -114,30 +113,29 @@
                     mediaRecorder.stop();
                     document.getElementById('startRecord').disabled = false;
                     document.getElementById('stopRecord').disabled = true;
-                });                
+                });
+                document.getElementById('sendData').addEventListener('click', async function () {
+                    data = {
+                        "audio_data":document.getElementById("textContent").textContent
+                    }
+                    response = await axios.post("http://localhost:8000/sendtext",data);
+                    console.log("Send data Triggered",response);
+                    let olamareturn ;
+                    if(response.status){
+                        console.log(response.data['message'])
+                        olamareturn= response.data['message']
+                    }
+                    else{
+                        olamareturn = 'Sorry there is some error ,Try again after some time'
+                    }
+                    document.getElementById("textContent").textContent= olamareturn;
+
+                });
             })
             .catch(function (err) {
                 console.error('Error accessing the microphone:', err);
             });
-
-
-        document.getElementById('sendData').addEventListener('click', async function () {
-                const data = document.getElementById("textContent").textContent;
-                const json_obj = {'status': 'success', 'model': 'tinyllama','prompt': data ,"stream":false}
-                
-                try{
-                    const response = await axios.post("http://localhost:8000/sendOlama",json_obj);
-                    document.getElementById("textContent").textContent = response.data['response'];
-                    
-                    alert("message send,wait for response");
-                    console.log(response);
-                }catch(error){
-                    alert("Error in sending the data,Try again")
-                    console.log(error)
-                }
-            });
-   
-   </script>
+    </script>
 
 </body>
 

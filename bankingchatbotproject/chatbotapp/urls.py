@@ -7,6 +7,7 @@ urlpatterns = [
     path('getdetails', views.getDetails, name='getDetails'),
     path('sendaudio', views.sendaudio, name='sendaudio'),
     path('transfermoney', views.transferMoney, name='transfermoney'),
+    path('sendtext',views.talktoOlama,name = 'talktoOlama'),
     path('sendOlama', views._response, name='_response'),
 
 ]
