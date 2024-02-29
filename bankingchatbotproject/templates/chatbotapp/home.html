@@ -123,7 +123,7 @@
 
         document.getElementById('sendData').addEventListener('click', async function () {
                 const data = document.getElementById("textContent").textContent;
-                const json_obj = {'status': 'success', 'model': 'llama2','prompt': data ,"stream":false}
+                const json_obj = {'status': 'success', 'model': 'tinyllama','prompt': data ,"stream":false}
                 
                 try{
                     const response = await axios.post("http://localhost:8000/sendOlama",json_obj);
