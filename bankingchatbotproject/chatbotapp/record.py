@@ -20,15 +20,23 @@ def get_text_from_voice(filename="static/recording.wav"):
     model = vosk.Model("static/vosk-model-small-en-in-0.4")
     rec = vosk.KaldiRecognizer(model, wf.getframerate())
     # rec.SetWords(True)
-
+    anant = ""
+    x = []
     while True:
         data = wf.readframes(4000)
         if len(data) == 0:
             break
         if rec.AcceptWaveform(data):
             recognizerResult = rec.Result()
-            print(rec.PartialResult())
-            results = results + recognizerResult
-    results = results + rec.FinalResult()
-
-    return results
+            x.append(recognizerResult)
+    results = rec.FinalResult()
+    x.append(results)
+    for item in x:
+        try:
+            json_data = json.loads(item)
+            text_value = json_data.get('text', '')
+            anant += " " + text_value
+            print("final result is :",text_value)
+        except json.JSONDecodeError as e:
+            print(f"Error decoding JSON: {e}")
+    return anant

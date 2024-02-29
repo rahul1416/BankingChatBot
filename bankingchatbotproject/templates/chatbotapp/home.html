@@ -66,6 +66,7 @@
     <audio controls id="audioPlayer" style="display:none;"></audio>
 
     <script>
+        
         navigator.mediaDevices.getUserMedia({ audio: true })
             .then(function (stream) {
                 const mediaRecorder = new MediaRecorder(stream);
@@ -113,6 +114,7 @@
                     mediaRecorder.stop();
                     document.getElementById('startRecord').disabled = false;
                     document.getElementById('stopRecord').disabled = true;
+<<<<<<< HEAD
                 });
                 document.getElementById('sendData').addEventListener('click', async function () {
                     data = {
@@ -131,11 +133,32 @@
                     document.getElementById("textContent").textContent= olamareturn;
 
                 });
+=======
+                });                
+>>>>>>> 54f6d56330604e8b649a29229142a727e83c2ef2
             })
             .catch(function (err) {
                 console.error('Error accessing the microphone:', err);
             });
-    </script>
+
+
+        document.getElementById('sendData').addEventListener('click', async function () {
+                const data = document.getElementById("textContent").textContent;
+                const json_obj = {'status': 'success', 'model': 'llama2','prompt': data ,"stream":false}
+                
+                try{
+                    const response = await axios.post("http://localhost:8000/sendOlama",json_obj);
+                    document.getElementById("textContent").textContent = response.data['response'];
+                    
+                    alert("message send,wait for response");
+                    console.log(response);
+                }catch(error){
+                    alert("Error in sending the data,Try again")
+                    console.log(error)
+                }
+            });
+   
+   </script>
 
 </body>
 
