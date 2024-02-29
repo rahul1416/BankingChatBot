@@ -19,7 +19,7 @@ def get_text_from_voice(filename="static/recording.wav"):
     results = ""
     model = vosk.Model("static/vosk-model-small-en-in-0.4")
     rec = vosk.KaldiRecognizer(model, wf.getframerate())
-    rec.SetWords(True)
+    # rec.SetWords(True)
 
     while True:
         data = wf.readframes(4000)
@@ -27,6 +27,7 @@ def get_text_from_voice(filename="static/recording.wav"):
             break
         if rec.AcceptWaveform(data):
             recognizerResult = rec.Result()
+            print(rec.PartialResult())
             results = results + recognizerResult
     results = results + rec.FinalResult()
 

@@ -114,8 +114,22 @@
                     document.getElementById('startRecord').disabled = false;
                     document.getElementById('stopRecord').disabled = true;
                 });
-                document.getElementById('sendData').addEventListener('click', function () {
-                    console.log("Send data Triggered");
+                document.getElementById('sendData').addEventListener('click', async function () {
+                    data = {
+                        "audio_data":document.getElementById("textContent").textContent
+                    }
+                    response = await axios.post("http://localhost:8000/sendtext",data);
+                    console.log("Send data Triggered",response);
+                    let olamareturn ;
+                    if(response.status){
+                        console.log(response.data['message'])
+                        olamareturn= response.data['message']
+                    }
+                    else{
+                        olamareturn = 'Sorry there is some error ,Try again after some time'
+                    }
+                    document.getElementById("textContent").textContent= olamareturn;
+
                 });
             })
             .catch(function (err) {
