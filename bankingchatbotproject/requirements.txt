@@ -6,4 +6,6 @@ soundevice
 soundfile
 numpy==1.26.4
 ffmpeg-python
-word2num
+vosk 
+pyaudio
+pydub
