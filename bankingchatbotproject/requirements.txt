@@ -5,3 +5,5 @@ django-cors-headers==4.3.1
 soundevice
 soundfile
 numpy==1.26.4
+ffmpeg-python
+word2num
