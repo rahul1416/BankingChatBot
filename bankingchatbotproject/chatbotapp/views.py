@@ -14,7 +14,7 @@ from pydub.playback import play
 # Create your views here.
 # @csrf_exempt
 def index(request):
-    return render(request,'chatbotapp/home.html')
+    return render(request,'chatbotapp/index.html')
       
 def getLogin(request):
     if request.method == 'GET':
@@ -150,10 +150,8 @@ def OlamaPreprocess(text):
                 # Assuming 'response' is a dictionary
                 for i, (key, value) in enumerate(response.items(), start=1):
                     print("We started", i, key, value, "We ended")
-
-                    if i == 1:
-                        api_call = 'getUserDetails'
-                    elif i == 2:
+                    api_call = 'getUserDetails'
+                    if 'acc' in key:
                         api_body['acc_no'] = value
 
             except Exception as e:

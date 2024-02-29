@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Recorder</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0; /* Classical background color */
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1, h4 {
+            margin-bottom: 20px;
+            text-align: center; /* Center align heading and subheading */
+        }
+
+        h1 {
+            color: #ff8c00; /* Change the color of h1 tag */
+        }
+
+        h4 {
+            color: #428bca; /* Change the color of h2 tag */
+        }
+
+        #controls {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        #controls button {
+            margin: 0 10px;
+        }
+
+        #sendData {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        #dataSection {
+            text-align: center;
+        }
+
+        .spinner-border {
+            display: none;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1 id="heading"></h1>
+        <h4 id="subheading"></h4>
+        <div id="controls">
+            <button id="startRecord" class="btn btn-primary">Start Recording</button>
+            <button id="stopRecord" class="btn btn-danger" disabled>Stop Recording</button>
+        </div>
+
+        <div id="dataSection">
+            <p>Data: <span id="textContent"></span></p>
+            <button id="sendData" class="btn btn-success" disabled>Send Data</button>
+            <div class="spinner">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="sr-only">Loading...</span>
+                </div>
+            </div>
+        </div>
+
+        <audio controls id="audioPlayer" style="display:none;"></audio>
+    </div>
+
+    <script>
+        $(document).ready(function () {
+            // Show loading spinner
+            $('.spinner-border').show();
+
+            // Animate heading
+            animateTyping('#heading', 'Welcome to Trio Banking Chatbot', 2000, function () {
+                // Animate subheading after heading animation completes
+                animateTyping('#subheading', 'Your own bank, which is very user-friendly', 2000, function () {
+                    // Hide loading spinner
+                    $('.spinner-border').hide();
+                });
+            });
+
+            const audioPlayer = document.getElementById('audioPlayer');
+            const textContent = document.getElementById('textContent');
+            const sendDataBtn = $('#sendData');
+            const spinner = $('.spinner');
+
+            let latestChunk;
+
+            $('#startRecord').click(function () {
+                navigator.mediaDevices.getUserMedia({ audio: true })
+                    .then(function (stream) {
+                        const mediaRecorder = new MediaRecorder(stream);
+
+                        mediaRecorder.ondataavailable = function (e) {
+                            spinner.show();
+                            latestChunk = e.data;
+                        };
+
+                        mediaRecorder.onstop = function () {
+                            if (latestChunk) {
+                                
+                                const blob = new Blob([latestChunk], { type: 'audio/ogg; codecs=opus' });
+                                const formData = new FormData();
+                                formData.append('audio', blob);
+                                
+                                axios.post('http://localhost:8000/sendaudio', formData, {
+                                    headers: {
+                                        'Content-Type': 'multipart/form-data'
+                                    }
+                                })
+                                    .then(response => {
+                                        console.log('Audio sent successfully');
+                                        textContent.textContent = response.data['prompt'];
+                                        sendDataBtn.prop('disabled', false);
+                                        spinner.hide();
+                                    })
+                                    .catch(error => {
+                                        console.error('There was a problem with sending the audio:', error);
+                                        spinner.hide(); 
+                                    });
+
+                                latestChunk = null;
+                            }
+                        };
+
+                        mediaRecorder.start();
+                        $('#startRecord').prop('disabled', true);
+                        $('#stopRecord').prop('disabled', false);
+                        $('#sendData').prop('disabled', true);
+
+                        $('#stopRecord').click(function () {
+                            mediaRecorder.stop();
+                            $('#startRecord').prop('disabled', false);
+                            $('#stopRecord').prop('disabled', true);
+                        });
+
+                        $('#sendData').click(async function () {
+                            spinner.show();
+                            const data = {
+                                "audio_data": textContent.textContent
+                            }
+                            const response = await axios.post("http://localhost:8000/sendtext", data);
+                            let olamareturn;
+                            if (response.status) {
+                                olamareturn = response.data['message'];
+                            } else {
+                                olamareturn = 'Sorry, there was an error. Please try again later.';
+                            }
+                            textContent.textContent = olamareturn;
+                            spinner.hide();
+                        });
+                    })
+                    .catch(function (err) {
+                        console.error('Error accessing the microphone:', err);
+                        spinner.hide();
+                    });
+            });
+
+            // Function to animate typing effect
+            function animateTyping(element, text, duration, callback) {
+                const len = text.length;
+                let char = 0;
+                const interval = setInterval(function () {
+                    if (char <= len) {
+                        $(element).text(text.substring(0, char++));
+                    } else {
+                        clearInterval(interval);
+                        if (callback) callback();
+                    }
+                }, duration / len);
+            }
+        });
+    </script>
+
+</body>
+
+</html>
