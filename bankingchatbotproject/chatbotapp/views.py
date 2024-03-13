@@ -99,6 +99,7 @@ def talktoOlama(request):
                 return JsonResponse({"message":response['message']},status = response['status'])
         except Exception as e:
             error = e
+            print("the error is ", e)
     tts(error)
     return JsonResponse({"message":error},status =200)
 
@@ -110,22 +111,26 @@ def preprocessText(text):
         start_text = -1
         end_text = -1
         print("the text modified",text)
+        temo_list = []
         for i in range(len(text)):
             if text[i]=='{':
                 start_text = i
             elif text[i]=='}':
                 end_text = i  
-        print("No problem till here")
-        if start_text != -1 and end_text != -1:
-            text = text[start_text:end_text+1]
-            print("and here")
-            try:
-                text = json.loads(text)
-                print("rahul here",text)
-            except Exception as e:
-                text = e ="Error"
-        else:
-            text = "Error: No JSON object found in the input."
+                if start_text != -1 and end_text != -1:
+                    # text = text[start_text:end_text+1]
+                    temo_list.append(text[start_text:end_text+1])
+                    print("and here")
+                else:
+                    text = "Error: No JSON object found in the input."
+                start_text = -1
+                end_text = -1
+        print("No problem till here",temo_list)
+        try:
+            text = json.loads(temo_list[-1])
+            print("rahul here",text)
+        except Exception as e:
+            text = e ="Error"
     except Exception as e:
         text = "Error"
         print(e)
@@ -144,7 +149,7 @@ def OlamaPreprocess(text):
         if(response=="Error"):
             return response
 
-        if 'get_details' in response['api_call']:
+        if 'get' in response['api_call']:
             print("Trye he")
             try:
                 # Assuming 'response' is a dictionary
@@ -157,17 +162,21 @@ def OlamaPreprocess(text):
             except Exception as e:
                 api_call = 'Not Valid data'
         
-        elif response['api_call']=='/transfer_money':
+        elif 'trans' in response['api_call']:
             try:
                 for i, (key, value) in enumerate(response.items(), start=1):
                     print("We started", i, key, value, "We ended")
                     api_call='transferMoney'
                     if 'sender' in key:
                         api_body['acc_no1']=value
-                    if 'reciever' in key:
+                    if 'rec' in key:
                         api_body['acc_no2'] =value 
-                    if 'amount' in key and value.isdigit():
-                        api_body['amount']=value
+                    try:
+                        if 'amount' in key and value.isdigit():
+                            api_body['amount']= value
+                    except Exception as e:
+                        print("Error in converting to integer ,but i am making it temporary number")
+                        api_body['amount']=50
                 
             except Exception as e:
                 api_call='Not Valid data'
@@ -242,7 +251,7 @@ def transferMoney(sender_acc_no,receiver_acc_no,amount):
     # Save changes to the database
     sender.save()
     receiver.save()
-    return {"message":f"{sender.customerName} has transferred {receiver.customerName} Rupees{amount} successfully, Current Balance:{sender.balance}", "status":200}
+    return {"message":f"{sender.customerName} has transferred {receiver.customerName} Rupees{amount} successfully, Current Balance of {sender.customerName} is {sender.balance}", "status":200}
     
 
 
